@@ -1,7 +1,6 @@
 use super::Object;
 use crate::writer::Writer;
-use crate::Result;
-use std::io::Write;
+use std::io::{Result, Write};
 
 #[derive(Debug, Clone)]
 pub struct Operation {
@@ -35,11 +34,22 @@ impl<Operations: AsRef<[Operation]>> Content<Operations> {
             } else {
                 buffer.write_all(b"\n")?;
             }
-            for operand in &operation.operands {
-                Writer::write_object(&mut buffer, operand)?;
-                buffer.write_all(b" ")?;
+            if operation.operator == "BI" {
+                for operand in &operation.operands {
+                    match operand {
+                        Object::Stream(stream) => {
+                            Writer::write_inline_image(&mut buffer, stream)?;
+                        }
+                        _ => {} // impossible!
+                    }
+                }
+            } else {
+                for operand in &operation.operands {
+                    Writer::write_object(&mut buffer, operand)?;
+                    buffer.write_all(b" ")?;
+                }
+                buffer.write_all(operation.operator.as_bytes())?;
             }
-            buffer.write_all(operation.operator.as_bytes())?;
         }
         Ok(buffer)
     }

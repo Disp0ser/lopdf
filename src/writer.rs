@@ -387,6 +387,23 @@ impl Writer {
         }
     }
 
+    /// Write Inline Image
+    pub fn write_inline_image(file: &mut dyn Write, stream: &Stream) -> Result<()> {
+        file.write_all(b"BI\n")?;
+        for (key, value) in &stream.dict {
+            if key != b"Length" {
+                Writer::write_name(file, key)?;
+                file.write_all(b" ")?;
+                Writer::write_object(file, value)?;
+                file.write_all(b"\n")?;
+            }
+        }
+        file.write_all(b"ID\n")?;
+        file.write_all(&stream.content)?;
+        file.write_all(b"\nEI")?;
+        Ok(())
+    }
+
     fn write_name(file: &mut dyn Write, name: &[u8]) -> Result<()> {
         file.write_all(b"/")?;
         for &byte in name {
